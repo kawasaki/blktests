@@ -17,9 +17,11 @@ install:
 # positives on helpers like _init_scsi_debug.
 SHELLCHECK_EXCLUDE := SC2119
 
-check:
+shellcheck:
 	shellcheck -x -e $(SHELLCHECK_EXCLUDE) -f gcc check new common/* \
 		tests/*/rc tests/*/[0-9]*[0-9]
+
+check: shellcheck
 	! grep TODO tests/*/rc tests/*/[0-9]*[0-9]
 	! find -name '*.out' -perm /u=x+g=x+o=x -printf '%p is executable\n' | grep .
 
