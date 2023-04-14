@@ -23,8 +23,33 @@ config_hz() {
 	fi | sed -n 's/^CONFIG_HZ=//p'
 }
 
+set_scsi_debug_delay() {
+	local freq jdelay
+	local delay_s=$1
+
+	freq=$(config_hz)
+	jdelay=$((delay_s * freq))
+	echo "CONFIG_HZ=${freq} jdelay=${jdelay}" >>"$FULL"
+	echo "$jdelay" > /sys/module/scsi_debug/parameters/delay
+}
+
+# Convert X.YYYs time format into rounded up integer in seconds.
+time_to_second() {
+	local time_output=${1}
+
+	time_output=${time_output/s/}
+	time_output=${time_output%%.*}
+	echo $((time_output + 1))
+}
+
+dd_read() {
+	dd if="/dev/$dev" of=/dev/null bs=512 count=1 iflag=direct >&/dev/null
+}
+
 test() {
-	local dev freq delay_s jdelay
+	local dev dd_time
+	local delay_s ret
+	local delay_margin_s=3
 
 	echo "Running ${TEST_NAME}"
 
@@ -40,14 +65,23 @@ test() {
 	# seconds.
 	echo 1 > "/sys/class/block/$dev/queue/io_timeout"
 	echo "I/O timeout = $(<"/sys/class/block/$dev/queue/io_timeout")" >>"$FULL"
-        # Change the scsi_debug delay to 3 seconds.
-	delay_s=3
-        freq=$(config_hz)
-        jdelay=$((delay_s * "${freq}"))
-        echo "CONFIG_HZ=${freq} jdelay=${jdelay}" >>"$FULL"
-	echo "$jdelay" > /sys/module/scsi_debug/parameters/delay
-	if dd if="/dev/$dev" of=/dev/null bs=512 count=1 \
-	      iflag=direct >&/dev/null; then
+
+	# Change the scsi_debug delay to 3 seconds.
+	delay_s=$delay_margin_s
+	set_scsi_debug_delay $delay_s
+
+	# Measure dd read time with error handling.
+	dd_time=$( { time dd_read; } 2>&1 )
+	ret=$?
+	echo "dd with ${delay_s}s delay: ret=$ret time=$dd_time" >>"$FULL"
+	dd_seconds=$(time_to_second "${dd_time}")
+
+	# Adjust the scsi_debug delay to cover dd read time with error handling.
+	delay_s=$((delay_margin_s + dd_seconds))
+	set_scsi_debug_delay "$delay_s"
+
+	# Confirm dd read fails after error handling.
+	if dd_read; then
 		echo "Reading from scsi_debug succeeded"
 	else
 		echo "Reading from scsi_debug failed"
