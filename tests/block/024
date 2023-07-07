@@ -16,18 +16,36 @@ requires() {
 	_have_null_blk
 }
 
+declare DELTA_MS=0
+
 init_times() {
 	init_read_ms="$(awk '{ print $4 }' /sys/block/nullb1/stat)"
 	init_write_ms="$(awk '{ print $8 }' /sys/block/nullb1/stat)"
 }
 
+# Measure additioanl overhead time for 1700 times = 8650 ms I/O in milli seconds
+# and store in DELTA_MS. This overhead depends on system and kernel performance.
+measure_delta() {
+	read_ms="$(awk '{ print $4 }' /sys/block/nullb1/stat)"
+	DELTA_MS=$((read_ms - 850 - init_read_ms))
+}
+
+# Print measured I/O time of read and write, subtracting overhead time DELTA_MS.
+# The first argument indicates how many sets of 1700 times read was done. The
+# second argument indicates how many sets of 1700 times write was done.
 show_times() {
+	local read_times=$1
+	local write_times=$2
+	local read_ms write_ms
+
 	read_ms="$(awk '{ print $4 }' /sys/block/nullb1/stat)"
 	write_ms="$(awk '{ print $8 }' /sys/block/nullb1/stat)"
 
 	# Print rounded to the nearest second
-	printf 'read %d s\n' $(((read_ms - init_read_ms + 500) / 1000))
-	printf 'write %d s\n' $(((write_ms - init_write_ms + 500) / 1000))
+	printf 'read %d s\n' $(((read_ms - init_read_ms - \
+				 DELTA_MS * read_times + 500) / 1000))
+	printf 'write %d s\n' $(((write_ms - init_write_ms - \
+				DELTA_MS * write_times + 500) / 1000))
 }
 
 test() {
@@ -42,23 +60,29 @@ test() {
 		return 1
 	fi
 
+	# Do 1700 times read and measure delta.
 	init_times
-	show_times
+	dd if=/dev/nullb1 of=/dev/null bs=4096 iflag=direct count=1700 status=none
+	measure_delta
 
-	# 1500 * 0.5 ms is 0.75 seconds, allowing for some overhead so
+	init_times
+	show_times 0 0
+
+	# 1700 * 0.5 ms is 0.85 seconds, allowing for some overhead so
 	# that it rounds to one second.
-	dd if=/dev/nullb1 of=/dev/null bs=4096 iflag=direct count=1500 status=none
-	show_times
+	dd if=/dev/nullb1 of=/dev/null bs=4096 iflag=direct count=1700 status=none
+	show_times 1 0
 
-	dd if=/dev/zero of=/dev/nullb1 bs=4096 oflag=direct count=1500 status=none
-	show_times
+	dd if=/dev/zero of=/dev/nullb1 bs=4096 oflag=direct count=1700 status=none
+	show_times 1 1
 
-	# 1800 * 0.5 ms is 0.9 seconds.
-	dd if=/dev/nullb1 of=/dev/null bs=4096 iflag=direct count=1500 status=none &
-	dd if=/dev/zero of=/dev/nullb1 bs=4096 oflag=direct count=1800 status=none &
+	# 0.85 seconds * 2 = 1.7 seconds that is rounds to 2 seconds.
+	dd if=/dev/nullb1 of=/dev/null bs=4096 iflag=direct count=1700 status=none &
+	# 0.85 seconds * 3 = 2.55 seconds that is rounds to 3 seconds.
+	dd if=/dev/zero of=/dev/nullb1 bs=4096 oflag=direct count=1700 status=none &
 	dd if=/dev/zero of=/dev/nullb1 bs=4096 oflag=direct count=1800 status=none &
 	wait
-	show_times
+	show_times 2 3
 
 	_exit_null_blk
 
