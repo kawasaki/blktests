@@ -3,6 +3,7 @@
 # Copyright (C) 2017 Omar Sandoval
 
 shopt -s extglob
+shopt -s inherit_errexit
 
 _warning() {
 	echo "$0: $*" >&2
@@ -370,8 +371,10 @@ _call_test() {
 
 		TIMEFORMAT="%Rs"
 		pushd . >/dev/null || return
+		set -e
 		{ time "$test_func" >"${seqres}.out" 2>&1; } 2>"${seqres}.runtime"
 		TEST_RUN["exit_status"]=$?
+		set +e
 		popd >/dev/null || return
 		TEST_RUN["runtime"]="$(cat "${seqres}.runtime")"
 		rm -f "${seqres}.runtime"
@@ -534,9 +537,8 @@ _run_test() {
 				fi
 			fi
 			RESULTS_DIR="$OUTPUT/$(basename "$TEST_DEV")"
-			if ! _call_test test_device; then
-				ret=1
-			fi
+			_call_test test_device
+			ret=$?
 			if (( unset_skip_reason )); then
 				unset SKIP_REASONS
 			fi
@@ -592,9 +594,15 @@ _run_group() {
 	local ret=0
 	local test_name
 	for test_name in "${tests[@]}"; do
-		if ! ( _run_test "$test_name" ); then
-			ret=1
-		fi
+		# Use () to run each test case in a different process. This
+		# allows to catch the errexit from test()/test_device() so that
+		# blktests can run following test cases. However, clean up for
+		# the errexit test is not enough. _run_test() does some clean up
+		# actions, but those are skipped on errexit. Also, more user-
+		# friendly errexit reportis desired. Need improvement.
+		( _run_test "$test_name" )
+		# shellcheck disable=SC2181
+		(($? != 0)) && ret=1
 	done
 	return $ret
 }
@@ -650,9 +658,8 @@ _check() {
 		if [[ $group != "$prev_group" ]]; then
 			prev_group="$group"
 			if [[ ${#tests[@]} -gt 0 ]]; then
-				if ! ( _run_group "${tests[@]}" ); then
-					ret=1
-				fi
+				_run_group "${tests[@]}"
+				ret=$?
 				tests=()
 			fi
 		fi
@@ -660,9 +667,8 @@ _check() {
 	done < <(_find_tests "$@" | sort -zu)
 
 	if [[ ${#tests[@]} -gt 0 ]]; then
-		if ! ( _run_group "${tests[@]}" ); then
-			ret=1
-		fi
+		_run_group "${tests[@]}"
+		ret=$?
 	fi
 
 	return $ret
