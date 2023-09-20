@@ -46,9 +46,9 @@ test() {
 	sleep "$TIMEOUT"
 	{
 		kill -9 $pid0
-		wait $pid0
+		wait $pid0 || true
 		kill -9 $pid1
-		wait $pid1
+		wait $pid1 || true
 	} 2>/dev/null
 
 	_exit_null_blk
