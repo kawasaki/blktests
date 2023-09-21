@@ -14,14 +14,19 @@ _error() {
 	exit 1
 }
 
+_source_test() {
+	unset CAN_BE_ZONED DESCRIPTION QUICK TIMED requires device_requires \
+	      test test_device fallback_device cleanup_fallback_device
+
+	# shellcheck disable=SC1090
+	. "tests/${test_name}"
+}
+
 _found_test() {
 	local test_name="$1"
 	local explicit="$2"
 
-	unset CAN_BE_ZONED DESCRIPTION QUICK TIMED requires device_requires test test_device fallback_device cleanup_fallback_device
-
-	# shellcheck disable=SC1090
-	if ! . "tests/${test_name}"; then
+	if ! _source_test "tests/${test_name}"; then
 		return 1
 	fi
 
@@ -481,8 +486,9 @@ _run_test() {
 	# runs to suppress job status output.
 	set +m
 
-	# shellcheck disable=SC1090
-	. "tests/${TEST_NAME}"
+	if ! _source_test "tests/${test_name}"; then
+		return 1
+	fi
 
 	if declare -fF test >/dev/null; then
 		if declare -fF requires >/dev/null; then
