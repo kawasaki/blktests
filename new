@@ -190,6 +190,13 @@ DESCRIPTION=""
 # failure. You should prefer letting the test fail because of broken output
 # over, say, checking the exit status of every command you run.
 #
+# Every line in the test shall success with zero status unless it is a part of
+# if or elif statement, or followed by && or ||. Otherwise, the test run stops
+# at that line. This 'every line shall success' rule helps to catch bugs in
+# tests. If a line should fail for test purpose, add '|| true' to the line to
+# ignore the status. This check is enabled with bash 'set -e' option. Refer
+# 'set' section in bash man page for detail.
+#
 # If the test cannot be run, this function may add strings to \$SKIP_REASONS
 # and return. In that case, the return value and output are ignored, and the
 # test is considered skipped. This should only be done when the requirements
