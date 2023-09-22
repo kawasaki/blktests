@@ -37,7 +37,7 @@ _run() {
 		state="$(_get_ublk_dev_state 0)"
 		[ "$state" == "QUIESCED" ] && break
 		sleep 1
-		(( secs++ ))
+		(( secs++ )) || true
 	done
 
 	state="$(_get_ublk_dev_state 0)"
@@ -54,7 +54,7 @@ _run() {
 		state="$(_get_ublk_dev_state 0)"
 		[ "$state" == "LIVE" ] && break
 		sleep 1
-		(( secs++ ))
+		(( secs++ )) || true
 	done
 	[ "$state" != "LIVE" ] && echo "device is $state after recovery"
 

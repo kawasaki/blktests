@@ -35,7 +35,7 @@ _run() {
 		state="$(_get_ublk_dev_state 0)"
 		[ "$state" == "DEAD" ] && break
 		sleep 1
-		(( secs++ ))
+		(( secs++ )) || true
 	done
 
 	state="$(_get_ublk_dev_state 0)"
