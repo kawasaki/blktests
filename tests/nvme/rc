@@ -557,7 +557,7 @@ _nvme_connect_subsys() {
 	if [[ ${no_wait} = false ]]; then
 		udevadm settle
 		for ((i = 0; i < 10; i++)); do
-			_nvme_ns_ready "${subsysnqn}" && return
+			_nvme_ns_ready "${subsysnqn}" && return 0
 			sleep .1
 		done
 	fi
