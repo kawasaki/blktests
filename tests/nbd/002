@@ -22,11 +22,11 @@ requires() {
 
 test() {
 	echo "Running ${TEST_NAME}"
-	_start_nbd_server
+	_start_nbd_server || true
 	{
-	nbd-client -N export localhost /dev/nbd0
-	parted -s /dev/nbd0 mklabel msdos
-	parted -s /dev/nbd0 mkpart primary 0 100
+	nbd-client -N export localhost /dev/nbd0 || true
+	parted -s /dev/nbd0 mklabel msdos || true
+	parted -s /dev/nbd0 mkpart primary 0 100 || true
 	} >> "$FULL" 2>&1
 
 	# We need to wait for udev to do its thing before we disconnect or else
@@ -53,7 +53,10 @@ test() {
 
 	echo "Testing IOCTL path"
 
-	nbd-client -N export localhost /dev/nbd0 >> "$FULL" 2>&1
+	if ! nbd-client -N export localhost /dev/nbd0 >> "$FULL" 2>&1; then
+		_stop_nbd_server
+		return 1
+	fi
 
 	if ! _wait_for_nbd_connect; then
 		echo "Connect didn't happen?"
