@@ -29,6 +29,7 @@ test_device() {
 	local cache_type_path
 	local original_cache_type
 	local cache_type
+	local out=$TMPDIR/out
 
 	cache_type_paths=("${TEST_DEV_SYSFS}"/device/scsi_disk/*/cache_type)
 	cache_type_path="${cache_type_paths[0]}"
@@ -39,14 +40,16 @@ test_device() {
 		# Skip cache types which disable read cache for SATA drives.
 		_test_dev_is_sata && [[ $cache_type == none ]] ||
 			[[ $cache_type =~ "no read" ]] && continue
-		( echo "$cache_type" > "$cache_type_path" ) |& grep -v "Invalid argument"
-		if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+		if (echo "$cache_type" > "$cache_type_path") > "$out" 2>&1; then
 			# If setting the cache type succeeded, it should now
 			# contain the new cache type.
-			grep -Fxv "$cache_type" "$cache_type_path"
+			grep -Fxv "$cache_type" "$cache_type_path" || true
 		fi
+		grep -v "Invalid argument" "$out" || true
 	done
-	( echo "$original_cache_type" > "$cache_type_path" ) |& grep -v "Invalid argument"
+	( echo "$original_cache_type" > "$cache_type_path" ) |&
+		grep -v "Invalid argument" || true
 
+	rm -f "$out"
 	echo "Test complete"
 }

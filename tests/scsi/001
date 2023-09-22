@@ -19,7 +19,7 @@ test_device() {
 
 	SG_DEV="/dev/$(_get_test_dev_sg)"
 	cd "$TMPDIR" || return 1
-	timeout -s INT 10s "$SRCDIR/sg/syzkaller1" "$SG_DEV"
+	timeout -s INT 10s "$SRCDIR/sg/syzkaller1" "$SG_DEV" || true
 
 	echo "Test complete"
 }
