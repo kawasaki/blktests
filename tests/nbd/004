@@ -40,10 +40,10 @@ test() {
 
 	sleep 10
 	{
-		kill -9 $pid1
-		wait $pid1
-		kill -9 $pid2
-		wait $pid2
+		kill -9 $pid1 || true
+		wait $pid1 || true
+		kill -9 $pid2 || true
+		wait $pid2 || true
 	} 2>/dev/null
 
 	_stop_nbd_server_netlink

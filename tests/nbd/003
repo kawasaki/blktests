@@ -18,13 +18,16 @@ test() {
 	echo "Running ${TEST_NAME}"
 
 	_start_nbd_server
-	nbd-client -L -N export localhost /dev/nbd0 >> "$FULL" 2>&1
-	mkfs.ext4 /dev/nbd0 >> "$FULL" 2>&1
+	if ! nbd-client -L -N export localhost /dev/nbd0 >> "$FULL" 2>&1; then
+		_stop_nbd_server
+		return 1
+	fi
+	mkfs.ext4 /dev/nbd0 >> "$FULL" 2>&1 || true
 
 	mkdir -p "${TMPDIR}/mnt"
 	src/mount_clear_sock /dev/nbd0 "${TMPDIR}/mnt" ext4 5000
-	umount "${TMPDIR}/mnt" > /dev/null 2>&1
+	umount "${TMPDIR}/mnt" > /dev/null 2>&1 || true
 
 	nbd-client -d /dev/nbd0 >> "$FULL" 2>&1
-	_stop_nbd_server
+	_stop_nbd_server || true
 }

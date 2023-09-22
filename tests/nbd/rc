@@ -72,7 +72,7 @@ EOF
 }
 
 _stop_nbd_server() {
-	kill -SIGTERM "$(cat "${TMPDIR}/nbd.pid")"
+	kill -SIGTERM "$(cat "${TMPDIR}/nbd.pid")" || true
 	rm -f "${TMPDIR}/nbd.pid"
 	rm -f "${TMPDIR}/export"
 }
