@@ -62,7 +62,7 @@ test() {
 			     --hostnqn "${def_hostnqn}" \
 			     --hostid "${def_hostid}" \
 			     --dhchap-secret "${hostkey}" \
-			     --dhchap-ctrl-secret "${hostkey}"
+			     --dhchap-ctrl-secret "${hostkey}" || true
 
 	_nvme_disconnect_subsys "${def_subsysnqn}"
 
@@ -85,7 +85,7 @@ test() {
 			     --hostnqn "${def_hostnqn}" \
 			     --hostid "${def_hostid}" \
 			     --dhchap-secret "${hostkey}" \
-			     --dhchap-ctrl-secret "${invkey}"
+			     --dhchap-ctrl-secret "${invkey}" || true
 
 	_nvme_disconnect_subsys "${def_subsysnqn}"
 

@@ -33,7 +33,7 @@ inject_unrec_read_on_read()
 	_nvme_enable_err_inject "$1" 0 100 1 0x281 1
 
 	dd if=/dev/"$1" of=/dev/null bs=512 count=1 iflag=direct \
-	    2> /dev/null 1>&2
+	    2> /dev/null 1>&2 || true
 
 	_nvme_disable_err_inject "$1"
 
@@ -53,7 +53,7 @@ inject_invalid_status_on_read()
 	_nvme_enable_err_inject "$1" 0 100 1 0x375 1
 
 	dd if=/dev/"$1" of=/dev/null bs=512 count=1 iflag=direct \
-	    2> /dev/null 1>&2
+	    2> /dev/null 1>&2 || true
 
 	_nvme_disable_err_inject "$1"
 
@@ -73,7 +73,7 @@ inject_write_fault_on_write()
 	_nvme_enable_err_inject "$1" 0 100 1 0x280 1
 
 	dd if=/dev/zero of=/dev/"$1" bs=512 count=1 oflag=direct \
-	    2> /dev/null 1>&2
+	    2> /dev/null 1>&2 || true
 
 	_nvme_disable_err_inject "$1"
 

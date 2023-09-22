@@ -55,7 +55,7 @@ test_device() {
 		fi
 	done
 
-	{ kill $!; wait; } &> /dev/null
+	{ kill $!; wait; } &> /dev/null || true
 
 	echo 1 > /sys/bus/pci/rescan
 

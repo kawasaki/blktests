@@ -44,7 +44,7 @@ test() {
 	echo "deleting controller"
 	_nvme_delete_ctrl "${nvmedev}"
 
-	{ kill "${fio_pid}"; wait; } &> /dev/null
+	{ kill "${fio_pid}"; wait; } &> /dev/null || true
 
 	_nvmet_target_cleanup
 
