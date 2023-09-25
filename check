@@ -311,7 +311,7 @@ _register_test_cleanup() {
 
 _cleanup() {
 	if [[ -v TEST_CLEANUP ]]; then
-		${TEST_CLEANUP}
+		${TEST_CLEANUP} || true
 	fi
 
 	if [[ "${TMPDIR:-}" ]]; then
