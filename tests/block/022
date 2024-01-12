@@ -12,8 +12,11 @@ DESCRIPTION="Test hang caused by freeze/unfreeze sequence"
 TIMED=1
 
 requires() {
-	_have_null_blk && _have_module_param null_blk shared_tags
+	_have_null_blk
 	_require_min_cpus 2
+	if ! _have_null_blk_feature shared_tags; then
+		_have_module_param null_blk shared_tags
+	fi
 }
 
 hotplug_test() {
@@ -28,12 +31,24 @@ test() {
 	echo "Running ${TEST_NAME}"
 	: "${TIMEOUT:=30}"
 
-	if ! _init_null_blk shared_tags=1 nr_devices=0; then
-		return 1
+	local configfs_has_shared_tags=True
+
+	# Old kernels do not have the shared_tags attribute in configfs. In that
+	# case, call _init_null_blk() to set shared_tags as a module parameter.
+	if ! _have_null_blk_feature shared_tags; then
+		configfs_has_shared_tags=False
+		if ! _init_null_blk shared_tags=1 nr_devices=0; then
+			echo "Loading null_blk failed"
+			return 1
+		fi
 	fi
 
 	mkdir -p /sys/kernel/config/nullb/0
 	mkdir -p /sys/kernel/config/nullb/1
+	if [[ $configfs_has_shared_tags == True ]]; then
+		echo 1 > /sys/kernel/config/nullb/0/shared_tags
+		echo 1 > /sys/kernel/config/nullb/1/shared_tags
+	fi
 	hotplug_test 0 &
 	pid0=$!
 	hotplug_test 1 &
