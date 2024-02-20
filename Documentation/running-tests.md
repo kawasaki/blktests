@@ -42,6 +42,11 @@ If `TEST_DEVS` is not defined or is empty, only tests which do not require a
 device will be run. If `TEST_DEVS` is defined as a normal variable instead of
 an array, it will be converted to an array by splitting on whitespace.
 
+When you specify null_blk or scsi_debug devices as TEST_DEVS, the devices can be
+affected by test cases that prepare null_blk or scsi_debug by themselves. In
+this case, specify the -d option or set `DEVICE_ONLY` to not run such test
+cases.
+
 ### Excluding Tests
 
 
