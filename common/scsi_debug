@@ -13,13 +13,18 @@ SD_PSEUDO_PATH=/sys/bus/pseudo/drivers/scsi_debug
 
 _scsi_debug_key_path() {
 	local key=${1}
+	local path perm
 
 	path="${SD_PARAM_PATH}/$key"
-	if [[ ! -e $path ]]; then
+	perm=$(stat --format="%A" "$path")
+	perm=${perm:2:1}
+	if [[ ! -e $path ]] || [[ $perm != w ]]; then
 		path="${SD_PSEUDO_PATH}/$key"
-	fi
-	if [[ ! -w $path ]]; then
-		return 1
+		perm=$(stat --format="%A" "$path")
+		perm=${perm:2:1}
+		if [[ ! -e $path ]] || [[ $perm != w ]]; then
+			return 1
+		fi
 	fi
 
 	echo "$path"
