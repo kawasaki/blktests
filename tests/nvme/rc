@@ -21,6 +21,7 @@ export def_subsys_uuid="91fdba0d-f87b-4c25-b80f-db7be1418b9e"
 nvme_img_size=${nvme_img_size:-"1G"}
 nvme_num_iter=${nvme_num_iter:-"1000"}
 nvmet_blkdev_type=${nvmet_blkdev_type:-"device"}
+[[ -z $NVMET_BLKDEV_TYPES ]] && NVMET_BLKDEV_TYPES=(device file)
 
 # Check consistency of NVMET_TR_TYPES and nvme_trtype configurations.
 # If neither is configured, set the default value.
@@ -49,6 +50,21 @@ _set_nvme_trtype() {
 
 	nvme_trtype=${NVMET_TR_TYPES[index]}
 	COND_DESC="nvmet tr=${nvme_trtype}"
+}
+
+_set_nvme_trtype_and_nvmet_blkdev_type() {
+	local index=$1
+	local bd_index=$((index / ${#NVMET_TR_TYPES[@]}))
+	local tr_index=$((index % ${#NVMET_TR_TYPES[@]}))
+
+	if [[ -z $index ]]; then
+		echo $(( ${#NVMET_BLKDEV_TYPES[@]} * ${#NVMET_TR_TYPES[@]} ))
+		return
+	fi
+
+	nvmet_blkdev_type=${NVMET_BLKDEV_TYPES[bd_index]}
+	nvme_trtype=${NVMET_TR_TYPES[tr_index]}
+	COND_DESC="nvmet bd=${nvmet_blkdev_type} tr=${nvme_trtype}"
 }
 
 # TMPDIR can not be referred out of test() or test_device() context. Instead of

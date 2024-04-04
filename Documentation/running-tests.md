@@ -108,6 +108,9 @@ The NVMe tests can be additionally parameterized via environment variables.
 - nvme_trtype: 'loop' (default), 'tcp', 'rdma' and 'fc'
   Run the tests with the given transport. This parameter is still usable but
   replaced with NVMET_TR_TYPES. Use NVMET_TR_TYPES instead.
+- NVMET_BLOCK_DEV_TYPES (array)
+  Set up NVME target backends with the specified block device type.
+  Valid elements are 'device' and 'file'. Default value is '(device file)'.
 - nvme_img_size: '1G' (default)
   Run the tests with given image size in bytes. 'm', 'M', 'g'
 	and 'G' postfix are supported.
