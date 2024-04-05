@@ -102,8 +102,12 @@ RUN_ZONED_TESTS=1
 
 The NVMe tests can be additionally parameterized via environment variables.
 
+- NVMET_TR_TYPES (array)
+  Set up NVME target backends with the specified transport.
+  Valid elements are 'loop', 'tcp', 'rdma' and 'fc'. Default value is '(loop)'.
 - nvme_trtype: 'loop' (default), 'tcp', 'rdma' and 'fc'
-  Run the tests with the given transport.
+  Run the tests with the given transport. This parameter is still usable but
+  replaced with NVMET_TR_TYPES. Use NVMET_TR_TYPES instead.
 - nvme_img_size: '1G' (default)
   Run the tests with given image size in bytes. 'm', 'M', 'g'
 	and 'G' postfix are supported.

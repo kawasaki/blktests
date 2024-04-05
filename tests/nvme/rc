@@ -18,9 +18,37 @@ def_hostid="0f01fb42-9f7f-4856-b0b3-51e60b8de349"
 def_hostnqn="nqn.2014-08.org.nvmexpress:uuid:${def_hostid}"
 export def_subsysnqn="blktests-subsystem-1"
 export def_subsys_uuid="91fdba0d-f87b-4c25-b80f-db7be1418b9e"
-nvme_trtype=${nvme_trtype:-"loop"}
 nvme_img_size=${nvme_img_size:-"1G"}
 nvme_num_iter=${nvme_num_iter:-"1000"}
+
+# Check consistency of NVMET_TR_TYPES and nvme_trtype configurations.
+# If neither is configured, set the default value.
+first_call=${first_call:-1}
+if ((first_call)); then
+	if [[ -n $nvme_trtype ]]; then
+		if [[ -n $NVMET_TR_TYPES ]]; then
+			echo "Both nvme_trtype and NVMET_TR_TYPES are specified"
+			exit 1
+		fi
+		NVMET_TR_TYPES=("$nvme_trtype")
+	elif [[ -z ${NVMET_TR_TYPES[*]} ]]; then
+		nvme_trtype="loop"
+		NVMET_TR_TYPES=("$nvme_trtype")
+	fi
+	first_call=0
+fi
+
+_set_nvme_trtype() {
+	local index=$1
+
+	if [[ -z $index ]]; then
+		echo ${#NVMET_TR_TYPES[@]}
+		return
+	fi
+
+	nvme_trtype=${NVMET_TR_TYPES[index]}
+	COND_DESC="nvmet tr=${nvme_trtype}"
+}
 
 # TMPDIR can not be referred out of test() or test_device() context. Instead of
 # global variable def_flie_path, use this getter function.
