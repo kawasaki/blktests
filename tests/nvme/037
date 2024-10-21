@@ -36,7 +36,13 @@ test_device() {
 
 		_nvme_disconnect_subsys \
 			--subsysnqn "${subsys}${i}" >>"${FULL}" 2>&1
+		if [[ ${nvme_trtype} == fc ]]; then
+			sleep .1
+		fi
 		_nvmet_passthru_target_cleanup --subsysnqn "${subsys}${i}"
+		if [[ ${nvme_trtype} == fc ]]; then
+			sleep .1
+		fi
 
 		if [[ -z "$nsdev" ]]; then
 			echo "FAIL: Failed to find passthru target namespace"
