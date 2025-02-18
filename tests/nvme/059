@@ -17,6 +17,7 @@ requires() {
 	_require_kernel_nvme_fabrics_feature tls
 	_require_nvme_trtype tcp
 	_require_nvme_cli_tls
+	_have_systemd_tlshd_service
 }
 
 set_conditions() {
@@ -37,7 +38,7 @@ test() {
 		return 1
 	fi
 
-	systemctl start tlshd
+	_systemctl_start tlshd
 
 	_nvmet_target_setup --blkdev file --tls
 
@@ -85,7 +86,7 @@ test() {
 
 	_nvme_disconnect_subsys
 
-	systemctl stop tlshd
+	_systemctl_stop
 
 	_nvmet_target_cleanup
 
