@@ -20,6 +20,7 @@ requires() {
 	_require_kernel_nvme_fabrics_feature concat
 	_require_nvme_trtype tcp
 	_require_nvme_cli_auth
+	_have_systemd_tlshd_service
 }
 
 set_conditions() {
@@ -33,11 +34,12 @@ test() {
 
 	local hostkey
 
-	systemctl restart tlshd
+	_systemctl_start tlshd
 
 	hostkey="$(nvme gen-dhchap-key -m 1 -n "${def_hostnqn}" 2> /dev/null)"
 	if [ -z "$hostkey" ] ; then
 		echo "nvme gen-dhchap-key failed"
+		_systemctl_stop
 		return 1
 	fi
 
@@ -52,6 +54,7 @@ test() {
 	if [[ -z "$ctrl" ]]; then
 		echo "WARNING: connection failed"
 		_nvmet_target_cleanup
+		_systemctl_stop
 		return 1
 	fi
 	tlskey=$(_nvme_ctrl_tls_key "$ctrl" || true)
@@ -59,6 +62,7 @@ test() {
 		echo "WARNING: connection is not encrypted"
 		_nvme_disconnect_subsys
 		_nvmet_target_cleanup
+		_systemctl_stop
 		return 1
 	fi
 
@@ -94,6 +98,7 @@ test() {
 	if [[ -z "$ctrl" ]]; then
 		echo "WARNING: connection failed"
 		_nvmet_target_cleanup
+		_systemctl_stop
 		return 1
 	fi
 	tlskey=$(_nvme_ctrl_tls_key "$ctrl" || true)
@@ -101,12 +106,15 @@ test() {
 		echo "WARNING: connection is not encrypted"
 		_nvme_disconnect_subsys
 		_nvmet_target_cleanup
+		_systemctl_stop
 		return 1
 	fi
 
 	_nvme_disconnect_subsys
 
 	_nvmet_target_cleanup
+
+	_systemctl_stop
 
 	echo "Test complete"
 }
