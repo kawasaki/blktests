@@ -36,7 +36,7 @@ test() {
 
 	ns=$(_find_nvme_ns "${def_subsys_uuid}")
 
-	rand_io_size="$(_nvme_calc_rand_io_size 4M)"
+	rand_io_size="$(_nvme_calc_rand_io_size 4M "/dev/${ns}")"
 	_run_fio_rand_io --filename="/dev/${ns}" --size="${rand_io_size}"
 
 	_nvme_disconnect_subsys >> "$FULL" 2>&1

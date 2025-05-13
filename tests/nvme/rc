@@ -242,11 +242,17 @@ _nvme_get_ctrl_list() {
 }
 
 _nvme_calc_rand_io_size() {
+	local path_or_dev=$2
 	local img_size_mb
 	local io_size_kb
+	local min_io_kb
 
+	min_io_kb=$(( $(_min_io "$path_or_dev") / 1024 ))
 	img_size_mb="$(convert_to_mb "$1")"
 	io_size_kb="$(((img_size_mb * 1024) / $(nproc)))"
+	if ((io_size_kb < min_io_kb)); then
+		io_size_kb=${min_io_kb}
+	fi
 
 	echo "${io_size_kb}k"
 }
