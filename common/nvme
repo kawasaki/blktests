@@ -279,7 +279,7 @@ _nvme_connect_subsys() {
 	local tls=false
 	local concat=false
 	local port
-	local i
+	local i ret
 	local -a ARGS
 
 	while [[ $# -gt 0 ]]; do
@@ -417,6 +417,20 @@ _nvme_connect_subsys() {
 	fi
 	ARGS+=(-o json)
 	connect=$(nvme connect "${ARGS[@]}" 2> /dev/null)
+	ret=$?
+	if ((ret)); then
+		echo "nvme connect command failed: ARGS: ${ARGS[@]}" >> "$FULL"
+		if [[ "$nvme_trtype" == tcp ]]; then
+			if _dmesg_since_test_start | tail -2 | grep --quiet \
+				"failed to receive icresp, error -4"; then
+				sleep 1
+				echo "TCP nvme connect failed due to INTR. Try again." >> "$FULL"
+				connect=$(nvme connect "${ARGS[@]}" 2> /dev/null)
+				ret=$?
+			fi
+		fi
+		((ret)) && return 1
+	fi
 
 	# Wait until device file and sysfs attributes get ready
 	if [[ ${no_wait} = false ]]; then
