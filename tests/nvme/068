@@ -1,0 +1,60 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-3.0+
+# Copyright (C) 2025 Hannes Reinecke (SUSE) <hare@suse.de>
+#
+# Test admin commands over ANA inaccessible paths.
+
+. tests/nvme/rc
+
+DESCRIPTION="test admin commands on disabled paths"
+
+requires() {
+	_nvme_requires
+	_have_loop
+	_require_nvme_trtype_is_fabrics
+}
+
+set_conditions() {
+	_set_nvme_trtype "$@"
+}
+
+test() {
+	local -a ports
+	local port
+	local ns
+
+	echo "Running ${TEST_NAME}"
+
+	_setup_nvmet
+
+	_nvmet_target_setup
+
+	_nvme_connect_subsys
+
+	ns=$(_find_nvme_ns "${def_subsys_uuid}")
+	[ -z "${ns}" ] && return 1
+	nvme nvm-id-ctrl "/dev/${ns}" >> "$FULL"
+	nvme nvm-id-ns "/dev/${ns}" >> "$FULL"
+
+	# switch to ANA inaccessible
+	_get_nvmet_ports "${def_subsysnqn}" ports
+	for port in $ports; do
+		_setup_nvmet_port_ana "${port}" 1 "inaccessible"
+	done
+
+	if nvme nvm-id-ctrl "/dev/${ns}" >> "$FULL" 2>&1; then
+		echo "unexpected 'nvme nvm-id-ctrl' succeess"
+	else
+		echo "expected 'nvme nvm-id-ctrl' failure"
+	fi
+	if nvme nvm-id-ns "/dev/${ns}" >> "$FULL" 2>&1; then
+		echo "unexpected 'nvme nvm-id-ns' succeess"
+	else
+		echo "expected 'nvme nvm-id-ns' failure"
+	fi
+
+	_nvme_disconnect_subsys
+	_nvmet_target_cleanup
+
+	echo "Test complete"
+}

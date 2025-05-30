@@ -1,0 +1,5 @@
+Running nvme/068
+expected 'nvme nvm-id-ctrl' failure
+expected 'nvme nvm-id-ns' failure
+disconnected 1 controller(s)
+Test complete
