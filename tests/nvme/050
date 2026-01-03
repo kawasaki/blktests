@@ -10,13 +10,14 @@
 DESCRIPTION="test nvme-pci timeout with fio jobs"
 CAN_BE_ZONED=1
 
-#restrict test to nvme-pci only
-nvme_trtype=pci
-
 requires() {
 	_have_fio
 	_nvme_requires
 	_have_kernel_options FAIL_IO_TIMEOUT FAULT_INJECTION_DEBUG_FS
+}
+
+device_requires() {
+	_require_test_dev_is_nvme_pci
 }
 
 test_device() {
